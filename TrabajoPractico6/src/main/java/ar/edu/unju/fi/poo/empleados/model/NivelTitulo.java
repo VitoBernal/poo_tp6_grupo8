@@ -1,5 +1,6 @@
 package ar.edu.unju.fi.poo.empleados.model;
 
-public class NivelTitulo {
-
+public enum NivelTitulo {
+    TERCIARIO,
+    UNIVERSITARIO
 }
