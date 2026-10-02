@@ -50,35 +50,35 @@ No. Vehiculo está asociado a RegistroIngresoSalida (relación "vehiculo 1..*"),
 
 Punto 2
 Historias de usuario.
-HU1 – Registrar empleado
+HU1 –
 Como encargado de la empresa, quiero registrar un empleado ingresando su legajo, documento, nombre, fecha de ingreso, cantidad de hijos y tipo de empleado, para poder gestionar sus datos y calcular posteriormente su sueldo neto.
 
-HU2 – Registrar profesional y sus títulos
+HU2 –
 Como encargado de la empresa, quiero registrar un empleado profesional y asociarle uno o más títulos indicando año, nombre de la carrera y nivel, para que cada título genere el adicional correspondiente en su sueldo.
 
-HU3 – Gestionar categoría de empleados administrativos
+HU3 –
 Como encargado de la empresa, quiero asignar y modificar la categoría de un empleado administrativo entre A, B o C, para que el sueldo se calcule de acuerdo con el adicional correspondiente a su categoría.
 
-HU4 – Calcular sueldo de empleado de limpieza
+HU4 – 
 Como encargado de la empresa, quiero calcular el sueldo de un empleado de limpieza considerando su adicional por insalubridad, para obtener correctamente su sueldo neto.
 
-HU5 – Calcular antigüedad
+HU5 – 
 Como encargado de la empresa, quiero que el sistema calcule la antigüedad del empleado a partir de su fecha de ingreso, para incorporar $6.500 por cada año de antigüedad a los remunerativos bonificables.
 
-HU6 – Calcular salario familiar
+HU6 – 
 Como encargado de la empresa, quiero que el sistema calcule el salario familiar considerando la cantidad de hijos a cargo, otorgando $15.000 por cada hijo, para incorporarlo al sueldo neto.
 
-HU7 – Calcular descuentos
+HU7 –
 Como encargado de la empresa, quiero que el sistema calcule los descuentos equivalentes al 18% de los remunerativos bonificables, para determinar correctamente el sueldo neto.
 
-HU8 – Calcular sueldo neto
+HU8 – 
 Como encargado de la empresa, quiero obtener el sueldo neto de cada empleado considerando sueldo básico, adicionales según el tipo, antigüedad, categoría cuando corresponda, salario familiar y descuentos, para conocer el importe final que debe percibir.
 
-HU9 – Buscar empleado por legajo
+HU9 – 
 Como encargado de la empresa, quiero buscar un empleado mediante su legajo, para consultar sus datos personales y el sueldo neto que le corresponde.
 
-HU10 – Modificar categoría de un administrativo
+HU10 –
 Como encargado de la empresa, quiero buscar un empleado administrativo por su legajo y cambiar su categoría, para actualizar su remuneración de acuerdo con la nueva categoría.
 
-HU11 – Agregar titulo a un profesional
+HU11 –
 Como encargado de la empresa, quiero buscar un empleado profesional por su legajo y agregarle un nuevo título, para actualizar los adicionales que corresponden a su sueldo.
