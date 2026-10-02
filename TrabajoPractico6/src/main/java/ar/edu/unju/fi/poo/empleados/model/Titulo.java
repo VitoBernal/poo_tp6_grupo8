@@ -5,7 +5,14 @@ public class Titulo {
     private String nombre;
     private NivelTitulo nivel;
 
-    public int getAnioObtencion() {
+	public Titulo(int anioObtencion, String nombre, NivelTitulo nivel) {
+		super();
+		this.anioObtencion = anioObtencion;
+		this.nombre = nombre;
+		this.nivel = nivel;
+	}
+
+	public int getAnioObtencion() {
         return anioObtencion;
     }
 

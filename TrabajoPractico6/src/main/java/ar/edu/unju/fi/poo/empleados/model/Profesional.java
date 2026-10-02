@@ -32,4 +32,8 @@ public class Profesional extends Empleado {
         adicional += cantidadTitulos * 30000;
         return adicional;
     }
+    
+    public void agregarTitulo (Titulo titulo) {
+    	titulos.add(titulo);
+    }
 }
