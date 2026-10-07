@@ -67,6 +67,8 @@ public abstract class Empleado {
         this.sueldoBasico = sueldoBasico;
     }
 
+    public abstract double calcularAdicional();
+
     public int antiguedad() {
         int actual = LocalDate.now().getYear();
         int ingreso = fechaIngreso.getYear();
@@ -87,7 +89,9 @@ public abstract class Empleado {
         return descuentos;
     }
 
-    public abstract double remunerativosBonificables();
+    public double remunerativosBonificables() {
+        return sueldoBasico + calcularAdicional() + antiguedad() * 6500;
+    }
 
     public String toString() {
         return "Empleado: Legajo: " + legajo + ", documento: " + documento + ", nombre: " + nombre

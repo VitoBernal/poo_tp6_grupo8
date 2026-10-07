@@ -13,12 +13,7 @@ public class Administrativo extends Empleado {
     }
 
     @Override
-    public double remunerativosBonificables() {
-        double remunerativosBonificables = getSueldoBasico() + (antiguedad() * 6500) + adicionalPorCategoria();
-        return remunerativosBonificables;
-    }
-
-    public int adicionalPorCategoria() {
+    public double calcularAdicional() {
         switch (categoria) {
             case A:
                 return 30000;

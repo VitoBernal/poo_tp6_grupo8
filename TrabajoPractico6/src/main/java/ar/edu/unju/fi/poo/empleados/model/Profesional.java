@@ -20,20 +20,15 @@ public class Profesional extends Empleado {
         this.titulos = titulos;
     }
 
-    @Override
-    public double remunerativosBonificables() {
-        double remunerativosBonificables = getSueldoBasico() + (antiguedad() * 6500) + adicionalPorTitulo();
-        return remunerativosBonificables;
+    public void agregarTitulo(Titulo titulo) {
+        titulos.add(titulo);
     }
 
-    public double adicionalPorTitulo() {
+    @Override
+    public double calcularAdicional() {
         double adicional = 0;
         int cantidadTitulos = titulos.size();
         adicional += cantidadTitulos * 30000;
         return adicional;
-    }
-    
-    public void agregarTitulo (Titulo titulo) {
-    	titulos.add(titulo);
     }
 }

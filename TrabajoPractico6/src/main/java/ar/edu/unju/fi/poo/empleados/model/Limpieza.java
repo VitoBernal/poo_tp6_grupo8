@@ -9,17 +9,16 @@ public class Limpieza extends Empleado {
         super(legajo, documento, nombre, fechaIngreso, hijos);
     }
 
-    @Override
-    public double remunerativosBonificables() {
-        double remunerativosBonificables = getSueldoBasico() + (antiguedad() * 6500) + adicional;
-        return remunerativosBonificables;
-    }
-
     public int getAdicional() {
         return adicional;
     }
 
     public void setAdicional(int adicional) {
         this.adicional = adicional;
+    }
+
+    @Override
+    public double calcularAdicional() {
+        return adicional;
     }
 }
