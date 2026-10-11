@@ -2,39 +2,64 @@ package ar.edu.unju.fi.poo.empleados.manager;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import ar.edu.unju.fi.poo.empleados.model.Administrativo;
 import ar.edu.unju.fi.poo.empleados.model.Categoria;
 import ar.edu.unju.fi.poo.empleados.model.Empleado;
 import ar.edu.unju.fi.poo.empleados.model.Limpieza;
+import ar.edu.unju.fi.poo.empleados.model.NivelTitulo;
 import ar.edu.unju.fi.poo.empleados.model.Profesional;
+import ar.edu.unju.fi.poo.empleados.model.TipoEmpleado;
 import ar.edu.unju.fi.poo.empleados.model.Titulo;
 
+/**
+ * Gestiona la lista de empleados de la empresa.
+ *
+ * Reglas de negocio que controla:
+ * - El legajo no se puede repetir.
+ * - Solo a un administrativo se le puede cambiar la categoría.
+ * - Solo a un profesional se le puede agregar un título.
+ */
 public class ManagerEmpleado {
-	private List<Empleado> empleados = new ArrayList<>();
+	private final List<Empleado> empleados = new ArrayList<>();
 
-	public void agregarEmpleado(Empleado emp) {
-		empleados.add(emp);
-	}
-
+	/** Carga 6 empleados iniciales, dos de cada tipo. */
 	public void inicializarEmpleados() {
-		Limpieza emp1 = new Limpieza(1, 49312843, "Roberto Cardozo", LocalDate.of(2015, 5, 16), 3);
-		Administrativo emp2 = new Administrativo(2, 34828945, "Luciana Narvaez", LocalDate.of(2023, 9, 27), 2,Categoria.A);
-		Profesional emp3 = new Profesional(3, 389238763, "Juan Vargas", LocalDate.of(2019, 11, 23), 4);
-
-		Limpieza emp4 = new Limpieza(4, 49312843, "Josefina Cruz", LocalDate.of(2016, 7, 8), 1);
-		Administrativo emp5 = new Administrativo(5, 34828945, "Yanina Lopez", LocalDate.of(2021, 3, 2), 0, Categoria.B);
-		Profesional emp6 = new Profesional(6, 389238763, "Nicolas Gonzalez", LocalDate.of(2024, 4, 29), 0);
-
-		agregarEmpleado(emp1);
-		agregarEmpleado(emp2);
-		agregarEmpleado(emp3);
-		agregarEmpleado(emp4);
-		agregarEmpleado(emp5);
-		agregarEmpleado(emp6);
+		agregarEmpleado(new Limpieza(1, 30125478, "Roberto Cardozo", LocalDate.of(2015, 5, 16), 3));
+		agregarEmpleado(new Limpieza(2, 35874123, "Josefina Cruz", LocalDate.of(2016, 7, 8), 1));
+		agregarEmpleado(new Administrativo(3, 34828945, "Luciana Narvaez", LocalDate.of(2023, 9, 27), 2, Categoria.A));
+		agregarEmpleado(new Administrativo(4, 38452147, "Yanina Lopez", LocalDate.of(2021, 3, 2), 0, Categoria.B));
+		agregarEmpleado(new Profesional(5, 28923876, "Juan Vargas", LocalDate.of(2019, 11, 23), 4,
+				new Titulo(2012, "Contador Público", NivelTitulo.UNIVERSITARIO)));
+		Profesional gonzalez = new Profesional(6, 40123987, "Nicolas Gonzalez", LocalDate.of(2024, 4, 29), 0,
+				new Titulo(2020, "Técnico Superior en Programación", NivelTitulo.TERCIARIO));
+		gonzalez.agregarTitulo(new Titulo(2023, "Licenciatura en Sistemas", NivelTitulo.UNIVERSITARIO));
+		agregarEmpleado(gonzalez);
 	}
 
+	/**
+	 * Agrega un empleado validando que su legajo no exista.
+	 *
+	 * @return true si se agregó, false si el legajo ya existía
+	 */
+	public boolean agregarEmpleado(Empleado empleado) {
+		if (empleado == null) {
+			throw new IllegalArgumentException("El empleado es obligatorio");
+		}
+		if (existeLegajo(empleado.getLegajo())) {
+			return false;
+		}
+		empleados.add(empleado);
+		return true;
+	}
+
+	public boolean existeLegajo(int legajo) {
+		return buscarEmpleado(legajo) != null;
+	}
+
+	/** @return el empleado con ese legajo, o null si no existe */
 	public Empleado buscarEmpleado(int legajo) {
 		for (Empleado empleado : empleados) {
 			if (empleado.getLegajo() == legajo) {
@@ -44,128 +69,102 @@ public class ManagerEmpleado {
 		return null;
 	}
 
-	public List<Administrativo> obtenerAdministrativos() {
-		List<Administrativo> administrativos = new ArrayList<>();
+	/** @return el administrativo con ese legajo, o null si no existe o no es administrativo */
+	public Administrativo buscarAdministrativo(int legajo) {
+		Empleado empleado = buscarEmpleado(legajo);
+		if (empleado instanceof Administrativo administrativo) {
+			return administrativo;
+		}
+		return null;
+	}
+
+	/** @return el profesional con ese legajo, o null si no existe o no es profesional */
+	public Profesional buscarProfesional(int legajo) {
+		Empleado empleado = buscarEmpleado(legajo);
+		if (empleado instanceof Profesional profesional) {
+			return profesional;
+		}
+		return null;
+	}
+
+	public List<Empleado> obtenerPorTipo(TipoEmpleado tipo) {
+		List<Empleado> resultado = new ArrayList<>();
 		for (Empleado empleado : empleados) {
-			if (empleado instanceof Administrativo) {
-				administrativos.add((Administrativo) empleado);
+			if (empleado.getTipo() == tipo) {
+				resultado.add(empleado);
 			}
 		}
-		return administrativos;
-	}
-
-	public List<Profesional> obtenerProfesionales() {
-		List<Profesional> profesionales = new ArrayList<>();
-		for (Empleado empleado : empleados) {
-			if (empleado instanceof Profesional) {
-				profesionales.add((Profesional) empleado);
-			}
-		}
-		return profesionales;
-	}
-
-	// b. Buscar un empleado por legajo y mostrar datos + sueldo neto
-	public void buscarYMostrarEmpleado(int legajo) {
-		System.out.println("Buscar empleado por legajo");
-		Empleado empleado = buscarEmpleado(legajo);
-		if (empleado != null) {
-			empleado.mostrarDatos();
-		} else {
-			System.out.println("No se encontro empleado con legajo: " + legajo);
-		}
-	}
-
-	// c. Buscar administrativo por legajo, cambiar categoria y mostrar sueldo neto
-	public void cambiarCategoriaAdministrativo(int legajo, Categoria nuevaCategoria) {
-		System.out.println("\nBuscar administrativo cambiar categoria y mostrar sueldo neto");
-		Empleado empleado = buscarEmpleado(legajo);
-		if (empleado instanceof Administrativo) {
-			Administrativo adm = (Administrativo) empleado;
-			System.out.println("Sueldo con categoria: " + adm.getCategoria() + " " + adm.calcularSueldoNeto());
-			adm.cambiarCategoria(nuevaCategoria);
-			System.out.println("Sueldo con categoria: " + adm.getCategoria() + " " + adm.calcularSueldoNeto());
-		} else {
-			System.out.println("No se encontro empleado administrativo con legajo: " + legajo);
-		}
-	}
-
-	// d. Buscar profesional por legajo, agregar nuevp titulo y mostrar el sueldo neto
-	public void agregarTituloProfesional(int legajo, Titulo nuevoTitulo) {
-		System.out.println("\nBuscar profesional agregar titulo y mostrar sueldo neto");
-		Empleado empleado = buscarEmpleado(legajo);
-		if (empleado instanceof Profesional) {
-			Profesional prof = (Profesional) empleado;
-			prof.agregarTitulo(nuevoTitulo);
-			System.out.println("Sueldo con nuevo titulo: " + prof.calcularSueldoNeto());
-		} else {
-			System.out.println("No se encontro empleado profesional con legajo: " + legajo);
-		}
+		return resultado;
 	}
 
 	public List<Administrativo> obtenerPorCategoria(Categoria categoria) {
-		List<Administrativo> lista = new ArrayList<>();
+		List<Administrativo> resultado = new ArrayList<>();
 		for (Empleado empleado : empleados) {
-			if (empleado instanceof Administrativo && ((Administrativo) empleado).getCategoria() == categoria) {
-				lista.add((Administrativo) empleado);
+			if (empleado instanceof Administrativo administrativo && administrativo.getCategoria() == categoria) {
+				resultado.add(administrativo);
 			}
 		}
-		return lista;
+		return resultado;
 	}
 
-	// e. Obtener empleados de categoria X y mostrar acumulados
-	public void mostrarAcumuladosPorCategoria(Categoria categoria) {
-		System.out.println("\nObtener empleado de categoria " + categoria + " y mostrar acumulados.");
-		double acumRemunerativo = 0d;
-		double acumSalario = 0d;
-		double acumDescuento = 0d;
-		double acumImporteNeto = 0d;
-
-		List<Administrativo> administrativos = obtenerPorCategoria(categoria);
-		for (Administrativo administrativo : administrativos) {
-			System.out.println("Categoria: " + administrativo.getCategoria() + " - Sueldo Neto: "+ administrativo.calcularSueldoNeto());
-			acumRemunerativo += administrativo.remunerativosBonificables();
-			acumSalario += administrativo.calcularSalarioFamiliar();
-			acumDescuento += administrativo.calcularDescuentos();
-			acumImporteNeto += administrativo.calcularSueldoNeto();
+	/** @return true si se cambió, false si el legajo no corresponde a un administrativo */
+	public boolean cambiarCategoria(int legajo, Categoria nuevaCategoria) {
+		Administrativo administrativo = buscarAdministrativo(legajo);
+		if (administrativo == null) {
+			return false;
 		}
-		System.out.println("\nTotal acumulado remunerativos bonificables: " + acumRemunerativo);
-		System.out.println("Total acumulado salario familiar: " + acumSalario);
-		System.out.println("Total acumalado descuentos: " + acumDescuento);
-		System.out.println("Total acumulado importe Neto: " + acumImporteNeto);
+		administrativo.cambiarCategoria(nuevaCategoria);
+		return true;
 	}
 
-	// f. Calcular importe neto acumulado por tipo de empleado
-	public double calcularImporteNetoPorTipo(char tipo) {
-		double acumImporteNeto = 0;
-		for (Empleado empleado : empleados) {
-			switch (tipo) {
-				case 'a', 'A':
-					if (empleado instanceof Administrativo) {
-						System.out.println(empleado.getNombre() + " sueldo Neto: " + empleado.calcularSueldoNeto());
-						acumImporteNeto += empleado.calcularSueldoNeto();
-					}
-					break;
-				case 'p', 'P':
-					if (empleado instanceof Profesional) {
-						System.out.println(empleado.getNombre() + " sueldo Neto: "+ empleado.calcularSueldoNeto());
-						acumImporteNeto += empleado.calcularSueldoNeto();
-					}
-					break;
-				case 'l', 'L':
-					if (empleado instanceof Limpieza) {
-						System.out.println(empleado.getNombre() + " sueldo Neto: "+ empleado.calcularSueldoNeto());
-						acumImporteNeto += empleado.calcularSueldoNeto();
-					}
-					break;
-				default:
-					System.out.println("opcion no valida");
-					return 0;
-			}
+	/** @return true si se agregó, false si el legajo no corresponde a un profesional */
+	public boolean agregarTitulo(int legajo, Titulo titulo) {
+		Profesional profesional = buscarProfesional(legajo);
+		if (profesional == null) {
+			return false;
 		}
-		return acumImporteNeto;
+		profesional.agregarTitulo(titulo);
+		return true;
+	}
+
+	public double calcularTotalRemunerativos(List<? extends Empleado> lista) {
+		double total = 0;
+		for (Empleado empleado : lista) {
+			total += empleado.calcularRemunerativosBonificables();
+		}
+		return total;
+	}
+
+	public double calcularTotalSalarioFamiliar(List<? extends Empleado> lista) {
+		double total = 0;
+		for (Empleado empleado : lista) {
+			total += empleado.calcularSalarioFamiliar();
+		}
+		return total;
+	}
+
+	public double calcularTotalDescuentos(List<? extends Empleado> lista) {
+		double total = 0;
+		for (Empleado empleado : lista) {
+			total += empleado.calcularDescuentos();
+		}
+		return total;
+	}
+
+	public double calcularTotalNeto(List<? extends Empleado> lista) {
+		double total = 0;
+		for (Empleado empleado : lista) {
+			total += empleado.calcularSueldoNeto();
+		}
+		return total;
+	}
+
+	/** Importe neto acumulado de todos los empleados del tipo indicado. */
+	public double calcularImporteNetoPorTipo(TipoEmpleado tipo) {
+		return calcularTotalNeto(obtenerPorTipo(tipo));
 	}
 
 	public List<Empleado> getEmpleados() {
-		return empleados;
+		return Collections.unmodifiableList(empleados);
 	}
 }

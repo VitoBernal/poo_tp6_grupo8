@@ -3,38 +3,41 @@ package ar.edu.unju.fi.poo.empleados.model;
 import java.time.LocalDate;
 
 public class Administrativo extends Empleado {
+	private Categoria categoria;
 
-    private Categoria categoria; // A,B,C
+	public Administrativo(int legajo, int documento, String nombre, LocalDate fechaIngreso, int cantidadHijos,
+			Categoria categoria) {
+		super(legajo, documento, nombre, fechaIngreso, cantidadHijos);
+		if (categoria == null) {
+			throw new IllegalArgumentException("La categoría es obligatoria para un administrativo");
+		}
+		this.categoria = categoria;
+	}
 
-    public Administrativo(int legajo, int documento, String nombre, LocalDate fechaIngreso, int hijos,
-            Categoria categoria) {
-        super(legajo, documento, nombre, fechaIngreso, hijos);
-        this.categoria = categoria;
-    }
+	/** El adicional del administrativo es el monto de su categoría. */
+	@Override
+	public double calcularAdicional() {
+		return categoria.getMonto();
+	}
 
-    @Override
-    public double calcularAdicional() {
-        switch (categoria) {
-            case A:
-                return 30000;
-            case B:
-                return 45000;
-            case C:
-                return 55000;
-            default:
-                return 0;
-        }
-    }
+	public void cambiarCategoria(Categoria nuevaCategoria) {
+		if (nuevaCategoria == null) {
+			throw new IllegalArgumentException("La categoría es obligatoria");
+		}
+		this.categoria = nuevaCategoria;
+	}
 
-    public Categoria getCategoria() {
-        return categoria;
-    }
+	public Categoria getCategoria() {
+		return categoria;
+	}
 
-    public void setCategoria(Categoria categoria) {
-        this.categoria = categoria;
-    }
+	@Override
+	public TipoEmpleado getTipo() {
+		return TipoEmpleado.ADMINISTRATIVO;
+	}
 
-    public void cambiarCategoria(Categoria nuevaCategoria) {
-        this.categoria = nuevaCategoria;
-    }
+	@Override
+	public String toString() {
+		return super.toString() + " | Categoría " + categoria;
+	}
 }
