@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 
+import ar.edu.unju.fi.poo.empleados.exception.EmpleadoException;
 import ar.edu.unju.fi.poo.empleados.manager.ManagerEmpleado;
 import ar.edu.unju.fi.poo.empleados.model.Administrativo;
 import ar.edu.unju.fi.poo.empleados.model.Categoria;
@@ -18,9 +19,22 @@ import ar.edu.unju.fi.poo.empleados.model.Titulo;
 public class MainEmpleados {
 	private static final Locale AR = Locale.forLanguageTag("es-AR");
 
+	/**
+	 * Crea un empleado; puede lanzar EmpleadoException si algún dato no es válido.
+	 */
+	@FunctionalInterface
+	private interface CreadorEmpleado {
+		Empleado crear() throws EmpleadoException;
+	}
+
 	public static void main(String[] args) {
 		ManagerEmpleado manager = new ManagerEmpleado();
-		manager.inicializarEmpleados();
+		try {
+			manager.inicializarEmpleados();
+		} catch (EmpleadoException e) {
+			System.out.println("Error al inicializar los empleados: " + e.getMessage());
+			return;
+		}
 
 		titulo("Empleados iniciales (" + manager.getEmpleados().size() + ")");
 		for (Empleado empleado : manager.getEmpleados()) {
@@ -30,36 +44,57 @@ public class MainEmpleados {
 
 		// a. Agregar empleados de distintos tipos
 		titulo("a) Agregar empleados de distintos tipos");
-		agregar(manager, new Limpieza(7, 36827937, "Alejandra Gomez", LocalDate.of(2018, 8, 29), 0));
-		agregar(manager, new Administrativo(8, 41836928, "Tobias Perez", LocalDate.of(2018, 10, 20), 2, Categoria.C));
-		agregar(manager, new Profesional(9, 33829018, "Soledad Nieva", LocalDate.of(2024, 7, 27), 3,
-				new Titulo(2019, "Abogacía", NivelTitulo.UNIVERSITARIO)));
-		System.out.println("Regla de negocio: el legajo no se puede repetir");
-		agregar(manager, new Limpieza(7, 25478963, "Carlos Ruiz", LocalDate.of(2020, 1, 10), 1));
+		agregar(manager,
+				() -> new Limpieza(manager.generarLegajo(), 36827937, "Alejandra Gomez", LocalDate.of(2018, 8, 29), 0));
+		agregar(manager, () -> new Administrativo(manager.generarLegajo(), 41836928, "Tobias Perez",
+				LocalDate.of(2018, 10, 20), 2, Categoria.C));
+		agregar(manager, () -> new Profesional(manager.generarLegajo(), 33829018, "Soledad Nieva",
+				LocalDate.of(2024, 7, 27), 3, new Titulo(2019, "Abogacía", NivelTitulo.UNIVERSITARIO)));
+
+		// Validaciones del TP8: cada caso debe ser rechazado con EmpleadoException
+		titulo("Validaciones (TP8)");
+		String legajoExistente = legajoDe(manager, 30125478);
+		System.out.println("Legajo repetido:");
+		agregar(manager, () -> new Limpieza(legajoExistente, 25478963, "Carlos Ruiz", LocalDate.of(2020, 1, 10), 1));
+		System.out.println("a. Documento repetido (30125478 ya pertenece a Roberto Cardozo):");
+		agregar(manager,
+				() -> new Limpieza(manager.generarLegajo(), 30125478, "Carlos Ruiz", LocalDate.of(2020, 1, 10), 1));
+		System.out.println("b. Legajo con formato inválido:");
+		agregar(manager, () -> new Limpieza("123-45", 25478963, "Carlos Ruiz", LocalDate.of(2020, 1, 10), 1));
+		System.out.println("c. Fecha de ingreso posterior a hoy:");
+		agregar(manager,
+				() -> new Limpieza(manager.generarLegajo(), 25478963, "Carlos Ruiz", LocalDate.now().plusDays(1), 1));
+		System.out.println("d. Cantidad de hijos fuera de rango (6):");
+		agregar(manager,
+				() -> new Limpieza(manager.generarLegajo(), 25478963, "Carlos Ruiz", LocalDate.of(2020, 1, 10), 6));
+		System.out.println("e. Profesional sin título:");
+		agregar(manager, () -> new Profesional(manager.generarLegajo(), 25478963, "Carlos Ruiz",
+				LocalDate.of(2020, 1, 10), 1, null));
 
 		// b. Buscar un empleado por legajo y mostrar sus datos y sueldo neto
 		titulo("b) Buscar empleado por legajo y mostrar datos + sueldo neto");
-		mostrarEmpleadoPorLegajo(manager, 7);
-		mostrarEmpleadoPorLegajo(manager, 99);
+		mostrarEmpleadoPorLegajo(manager, legajoDe(manager, 36827937));
+		mostrarEmpleadoPorLegajo(manager, "0000-" + Empleado.sufijoAnioActual());
 
 		// c. Buscar un administrativo, cambiar su categoría y mostrar el sueldo neto
 		titulo("c) Buscar administrativo, cambiar categoría y mostrar sueldo neto");
-		cambiarCategoria(manager, 4, Categoria.C);
-		cambiarCategoria(manager, 1, Categoria.B); // legajo 1 es de limpieza
+		cambiarCategoria(manager, legajoDe(manager, 38452147), Categoria.C);
+		cambiarCategoria(manager, legajoDe(manager, 30125478), Categoria.B); // es de limpieza
 
 		// d. Buscar un profesional, agregarle un título y mostrar el sueldo neto
 		titulo("d) Buscar profesional, agregar título y mostrar sueldo neto");
-		agregarTitulo(manager, 5, new Titulo(2018, "Licenciatura en Administración", NivelTitulo.UNIVERSITARIO));
-		agregarTitulo(manager, 3, new Titulo(2015, "Martillero Público", NivelTitulo.TERCIARIO)); // legajo 3 es administrativo
+		agregarTitulo(manager, legajoDe(manager, 28923876), 2018, "Licenciatura en Administración",
+				NivelTitulo.UNIVERSITARIO);
+		agregarTitulo(manager, legajoDe(manager, 34828945), 2015, "Martillero Público", NivelTitulo.TERCIARIO); // es
+																												// administrativo
 
 		try (Scanner sc = new Scanner(System.in)) {
 			// e. Empleados de una categoría X con totales acumulados
 			titulo("e) Empleados de una categoría y totales acumulados");
 			Categoria categoria = pedirCategoria(sc);
 			if (categoria != null) {
-				List<Administrativo> deLaCategoria = manager.obtenerPorCategoria(categoria);
 				System.out.println("Empleados de la categoría " + categoria + ":");
-				mostrarTabla(manager, deLaCategoria);
+				mostrarTabla(manager, manager.obtenerPorCategoria(categoria));
 			}
 
 			// f. Importe neto acumulado de un tipo de empleado elegido por el usuario
@@ -74,19 +109,27 @@ public class MainEmpleados {
 		}
 	}
 
-	// ---------------------------------------------------------------- casos de prueba
+	// ---------------------------------------------------------------- casos de
+	// prueba
 
-	private static void agregar(ManagerEmpleado manager, Empleado empleado) {
-		if (manager.agregarEmpleado(empleado)) {
-			System.out.println("Agregado: " + empleado.getTipo().getDescripcion() + " legajo " + empleado.getLegajo()
+	private static void agregar(ManagerEmpleado manager, CreadorEmpleado creador) {
+		try {
+			Empleado empleado = creador.crear();
+			manager.agregarEmpleado(empleado);
+			System.out.println("  Agregado: " + empleado.getTipo().getDescripcion() + " legajo " + empleado.getLegajo()
 					+ " - " + empleado.getNombre());
-		} else {
-			System.out.println("Rechazado: ya existe un empleado con legajo " + empleado.getLegajo() + " ("
-					+ empleado.getNombre() + " no se agregó)");
+		} catch (EmpleadoException e) {
+			System.out.println("  Rechazado: " + e.getMessage());
 		}
 	}
 
-	private static void mostrarEmpleadoPorLegajo(ManagerEmpleado manager, int legajo) {
+	/** Legajo del empleado con ese documento (los legajos se generan al azar). */
+	private static String legajoDe(ManagerEmpleado manager, int documento) {
+		Empleado empleado = manager.buscarPorDocumento(documento);
+		return empleado != null ? empleado.getLegajo() : null;
+	}
+
+	private static void mostrarEmpleadoPorLegajo(ManagerEmpleado manager, String legajo) {
 		Empleado empleado = manager.buscarEmpleado(legajo);
 		if (empleado == null) {
 			System.out.println("No existe un empleado con legajo " + legajo);
@@ -95,36 +138,47 @@ public class MainEmpleados {
 		mostrarFicha(empleado);
 	}
 
-	private static void cambiarCategoria(ManagerEmpleado manager, int legajo, Categoria nuevaCategoria) {
+	private static void cambiarCategoria(ManagerEmpleado manager, String legajo, Categoria nuevaCategoria) {
 		Administrativo administrativo = manager.buscarAdministrativo(legajo);
 		if (administrativo == null) {
 			System.out.println("El legajo " + legajo + " no corresponde a un empleado administrativo");
 			return;
 		}
-		System.out.println(administrativo.getNombre() + " (legajo " + legajo + ")");
-		System.out.println("  Categoría actual " + administrativo.getCategoria() + " -> sueldo neto "
-				+ pesos(administrativo.calcularSueldoNeto()));
-		manager.cambiarCategoria(legajo, nuevaCategoria);
-		System.out.println("  Categoría nueva  " + administrativo.getCategoria() + " -> sueldo neto "
-				+ pesos(administrativo.calcularSueldoNeto()));
+		try {
+			System.out.println(administrativo.getNombre() + " (legajo " + legajo + ")");
+			System.out.println("  Categoría actual " + administrativo.getCategoria() + " -> sueldo neto "
+					+ pesos(administrativo.calcularSueldoNeto()));
+			manager.cambiarCategoria(legajo, nuevaCategoria);
+			System.out.println("  Categoría nueva  " + administrativo.getCategoria() + " -> sueldo neto "
+					+ pesos(administrativo.calcularSueldoNeto()));
+		} catch (EmpleadoException e) {
+			System.out.println("  No se pudo cambiar la categoría: " + e.getMessage());
+		}
 	}
 
-	private static void agregarTitulo(ManagerEmpleado manager, int legajo, Titulo titulo) {
+	private static void agregarTitulo(ManagerEmpleado manager, String legajo, int anio, String carrera,
+			NivelTitulo nivel) {
 		Profesional profesional = manager.buscarProfesional(legajo);
 		if (profesional == null) {
 			System.out.println("El legajo " + legajo + " no corresponde a un empleado profesional");
 			return;
 		}
-		System.out.println(profesional.getNombre() + " (legajo " + legajo + ")");
-		System.out.println("  Con " + profesional.getTitulos().size() + " título(s) -> sueldo neto "
-				+ pesos(profesional.calcularSueldoNeto()));
-		manager.agregarTitulo(legajo, titulo);
-		System.out.println("  Se agregó: " + titulo);
-		System.out.println("  Con " + profesional.getTitulos().size() + " título(s) -> sueldo neto "
-				+ pesos(profesional.calcularSueldoNeto()));
+		try {
+			Titulo titulo = new Titulo(anio, carrera, nivel);
+			System.out.println(profesional.getNombre() + " (legajo " + legajo + ")");
+			System.out.println("  Con " + profesional.getTitulos().size() + " título(s) -> sueldo neto "
+					+ pesos(profesional.calcularSueldoNeto()));
+			manager.agregarTitulo(legajo, titulo);
+			System.out.println("  Se agregó: " + titulo);
+			System.out.println("  Con " + profesional.getTitulos().size() + " título(s) -> sueldo neto "
+					+ pesos(profesional.calcularSueldoNeto()));
+		} catch (EmpleadoException e) {
+			System.out.println("  No se pudo agregar el título: " + e.getMessage());
+		}
 	}
 
-	// ---------------------------------------------------------------- entrada del usuario
+	// ---------------------------------------------------------------- entrada del
+	// usuario
 
 	private static Categoria pedirCategoria(Scanner sc) {
 		while (true) {
@@ -150,19 +204,20 @@ public class MainEmpleados {
 				return null;
 			}
 			switch (sc.nextLine().trim().toUpperCase()) {
-				case "P":
-					return TipoEmpleado.PROFESIONAL;
-				case "A":
-					return TipoEmpleado.ADMINISTRATIVO;
-				case "L":
-					return TipoEmpleado.LIMPIEZA;
-				default:
-					System.out.println("Opción inválida, intente nuevamente.");
+			case "P":
+				return TipoEmpleado.PROFESIONAL;
+			case "A":
+				return TipoEmpleado.ADMINISTRATIVO;
+			case "L":
+				return TipoEmpleado.LIMPIEZA;
+			default:
+				System.out.println("Opción inválida, intente nuevamente.");
 			}
 		}
 	}
 
-	// ---------------------------------------------------------------- salida por consola
+	// ---------------------------------------------------------------- salida por
+	// consola
 
 	private static void mostrarFicha(Empleado empleado) {
 		System.out.println(empleado);
@@ -193,7 +248,7 @@ public class MainEmpleados {
 			System.out.println("  (no hay empleados)");
 			return;
 		}
-		String formato = "  %-6s %-20s %16s %16s %16s %16s%n";
+		String formato = "  %-8s %-20s %16s %16s %16s %16s%n";
 		System.out.printf(formato, "Legajo", "Nombre", "Remunerativos", "Sal. familiar", "Descuentos", "Neto");
 		for (Empleado e : lista) {
 			System.out.printf(formato, e.getLegajo(), e.getNombre(), pesos(e.calcularRemunerativosBonificables()),

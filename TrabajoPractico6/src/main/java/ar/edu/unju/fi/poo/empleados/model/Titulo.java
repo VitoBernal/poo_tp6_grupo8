@@ -1,19 +1,21 @@
 package ar.edu.unju.fi.poo.empleados.model;
 
-public class Titulo {
-	private int anio;
-	private String carrera;
-	private NivelTitulo nivel;
+import ar.edu.unju.fi.poo.empleados.exception.EmpleadoException;
 
-	public Titulo(int anio, String carrera, NivelTitulo nivel) {
+public class Titulo {
+	private final int anio;
+	private final String carrera;
+	private final NivelTitulo nivel;
+
+	public Titulo(int anio, String carrera, NivelTitulo nivel) throws EmpleadoException {
 		if (anio <= 0) {
-			throw new IllegalArgumentException("El año del título debe ser mayor a 0");
+			throw new EmpleadoException("El año del título debe ser mayor a 0");
 		}
 		if (carrera == null || carrera.isBlank()) {
-			throw new IllegalArgumentException("La carrera es obligatoria");
+			throw new EmpleadoException("La carrera del título es obligatoria");
 		}
 		if (nivel == null) {
-			throw new IllegalArgumentException("El nivel del título es obligatorio");
+			throw new EmpleadoException("El nivel del título es obligatorio (Universitario o Terciario)");
 		}
 		this.anio = anio;
 		this.carrera = carrera;
@@ -24,24 +26,12 @@ public class Titulo {
 		return anio;
 	}
 
-	public void setAnio(int anio) {
-		this.anio = anio;
-	}
-
 	public String getCarrera() {
 		return carrera;
 	}
 
-	public void setCarrera(String carrera) {
-		this.carrera = carrera;
-	}
-
 	public NivelTitulo getNivel() {
 		return nivel;
-	}
-
-	public void setNivel(NivelTitulo nivel) {
-		this.nivel = nivel;
 	}
 
 	@Override
