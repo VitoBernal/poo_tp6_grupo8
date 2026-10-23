@@ -1,5 +1,6 @@
 package ar.edu.unju.fi.poo;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -10,8 +11,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import ar.edu.unju.fi.poo.empleados.exception.EmpleadoException;
 import ar.edu.unju.fi.poo.empleados.manager.ManagerEmpleado;
@@ -33,9 +38,9 @@ public class EmpleadoTest {
 	@BeforeEach
 	void setUp() throws EmpleadoException {
 		manager = new ManagerEmpleado();
+		manager.inicializarEmpleados();
 		empleado1 = new Limpieza(manager.generarLegajo(), 12345678, "Jose fernandez", LocalDate.of(2026, 5, 10), 0);
 		empleado2 = new Limpieza(manager.generarLegajo(), 22929848, "Maria lopez", LocalDate.of(2026, 5, 10), 2);
-		manager.inicializarEmpleados();
 	}
 
 	/*
@@ -278,4 +283,95 @@ public class EmpleadoTest {
 		assertEquals(6, manager.getEmpleados().size());
 	}
 
+	// ================================================================
+	// Validaciones del TP8 (punto 2) y operaciones que faltaban probar
+	// ================================================================
+
+	private static final String ANIO = Empleado.sufijoAnioActual();
+	private static final LocalDate HOY = LocalDate.now();
+
+	@RepeatedTest(10)
+	@DisplayName("b. Generar legajo varias veces: siempre válido y sin repetir")
+	void generarLegajoRepetidoTest() {
+		String legajo = manager.generarLegajo();
+		assertTrue(Empleado.esLegajoValido(legajo));
+		assertFalse(manager.existeLegajo(legajo));
+	}
+
+	@DisplayName("b. Legajo con formato inválido lanza excepción")
+	@ParameterizedTest(name = "legajo = \"{0}\"")
+	@ValueSource(strings = { "", "123-26", "12345-26", "ABCD-26", "1234/26", "1234-2" })
+	void legajoInvalidoTest(String legajo) {
+		assertThrows(EmpleadoException.class, () -> new Limpieza(legajo, 30000001, "Legajo Invalido", HOY, 0));
+	}
+
+	@Disabled("Pendiente de confirmar con el profesor: el ejemplo del enunciado (23123-26) tiene 5 dígitos y el formato NNNN-AA indica 4")
+	@Test
+	@DisplayName("b. Legajo de 5 dígitos como el ejemplo del enunciado")
+	void legajoCincoDigitosTest() {
+		assertDoesNotThrow(() -> new Limpieza("23123-" + ANIO, 30000001, "Legajo Cinco Digitos", HOY, 0));
+	}
+
+	@Test
+	@DisplayName("Agregar empleado con legajo repetido lanza excepción")
+	void agregarEmpleadoLegajoRepetidoTest() throws EmpleadoException {
+		String legajoExistente = manager.getEmpleados().get(0).getLegajo();
+		Empleado repetido = new Limpieza(legajoExistente, 30000001, "Legajo Repetido", HOY, 0);
+		assertThrows(EmpleadoException.class, () -> manager.agregarEmpleado(repetido));
+		assertEquals(6, manager.getEmpleados().size());
+	}
+
+	@Test
+	@DisplayName("c. Fecha de ingreso posterior a hoy lanza excepción; la de hoy es válida")
+	void fechaIngresoTest() throws EmpleadoException {
+		assertThrows(EmpleadoException.class,
+				() -> new Limpieza(manager.generarLegajo(), 30000001, "Fecha Futura", HOY.plusDays(1), 0));
+		Empleado ingresaHoy = new Limpieza(manager.generarLegajo(), 30000002, "Ingresa Hoy", HOY, 0);
+		assertEquals(HOY, ingresaHoy.getFechaIngreso());
+	}
+
+	@DisplayName("d. Cantidad de hijos fuera de 0 a 5 lanza excepción")
+	@ParameterizedTest(name = "hijos = {0}")
+	@ValueSource(ints = { -1, 6, 10 })
+	void cantidadHijosInvalidaTest(int hijos) {
+		assertThrows(EmpleadoException.class,
+				() -> new Limpieza(manager.generarLegajo(), 30000001, "Hijos Invalidos", HOY, hijos));
+	}
+
+	@DisplayName("d. Cantidad de hijos entre 0 y 5 es válida")
+	@ParameterizedTest(name = "hijos = {0}")
+	@ValueSource(ints = { 0, 3, 5 })
+	void cantidadHijosValidaTest(int hijos) throws EmpleadoException {
+		Empleado empleado = new Limpieza(manager.generarLegajo(), 30000001, "Hijos Validos", HOY, hijos);
+		assertEquals(hijos, empleado.getCantidadHijos());
+	}
+
+	@Test
+	@DisplayName("e. Registrar un profesional sin título lanza excepción")
+	void profesionalSinTituloTest() {
+		assertThrows(EmpleadoException.class,
+				() -> new Profesional(manager.generarLegajo(), 30000001, "Sin Titulo", HOY, 0, null));
+		assertThrows(EmpleadoException.class, () -> new Titulo(2020, "Carrera sin nivel", null));
+	}
+
+	@Test
+	@DisplayName("Existe documento")
+	void existeDocumentoTest() {
+		assertTrue(manager.existeDocumento(30125478));
+		assertFalse(manager.existeDocumento(11111111));
+	}
+
+	@Test
+	@DisplayName("Buscar empleado por documento: existente e inexistente")
+	void buscarPorDocumentoTest() {
+		assertEquals("Roberto Cardozo", manager.buscarPorDocumento(30125478).getNombre());
+		assertNull(manager.buscarPorDocumento(11111111));
+	}
+
+	@Test
+	@DisplayName("Buscar un legajo inexistente devuelve null")
+	void buscarEmpleadoInexistenteTest() {
+		assertNull(manager.buscarEmpleado("0000-" + ANIO));
+		assertFalse(manager.existeLegajo("0000-" + ANIO));
+	}
 }
